@@ -9,6 +9,7 @@ class UploadResponse(BaseModel):
 
 class ChatRequest(BaseModel):
     question: str = Field(..., min_length=1)
+    source: str | None = None
 
 
 class SourceChunk(BaseModel):
@@ -21,3 +22,8 @@ class SourceChunk(BaseModel):
 class ChatResponse(BaseModel):
     answer: str
     sources: list[SourceChunk]
+
+
+class DocumentInfo(BaseModel):
+    filename: str
+    chunks_indexed: int

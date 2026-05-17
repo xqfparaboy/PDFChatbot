@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from app.config import get_settings
-from app.db.qdrant import search_chunks, upsert_chunks
-from app.models import ChatResponse
+from app.db.qdrant import list_documents, search_chunks, upsert_chunks
+from app.models import ChatResponse, DocumentInfo
 from app.rag.chunking import chunk_page_text
 from app.services.embedding_service import embed_text, embed_texts
 from app.services.llm_service import generate_answer
@@ -26,15 +26,19 @@ async def index_pdf(pdf_path: Path, source: str) -> int:
     return len(chunks)
 
 
-async def answer_question(question: str) -> ChatResponse:
+async def answer_question(question: str, source: str | None = None) -> ChatResponse:
     settings = get_settings()
     query_vector = embed_text(question)
-    chunks = search_chunks(query_vector, top_k=settings.search_top_k)
+    chunks = search_chunks(query_vector, top_k=settings.search_top_k, source=source)
     if not chunks:
         return ChatResponse(
-            answer="I do not know based on the PDF. No indexed chunks were found.",
+            answer="I do not know based on the selected PDF. No matching indexed chunks were found.",
             sources=[],
         )
 
     answer = await generate_answer(question, chunks)
     return ChatResponse(answer=answer, sources=chunks)
+
+
+async def get_indexed_documents() -> list[DocumentInfo]:
+    return list_documents()

@@ -61,6 +61,36 @@ curl -X POST http://localhost:8000/chat \
   -d '{"question":"What is deadlock?"}'
 ```
 
+## Mobile App
+
+The Expo React Native app lives in `mobile/`.
+
+Run these in two separate Terminal windows.
+
+Terminal 1 backend:
+
+```bash
+cd /Users/abhinavsingh/Documents/Python/PDFChatBot
+docker compose up -d qdrant
+source .venv/bin/activate
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Terminal 2 mobile:
+
+```bash
+cd /Users/abhinavsingh/Documents/Python/PDFChatBot/mobile
+npm start -- --host lan
+```
+
+Find your Mac Wi-Fi IP if it changes:
+
+```bash
+ipconfig getifaddr en0
+```
+
+In Expo Go, set the Backend URL to `http://YOUR_MAC_WIFI_IP:8000`.
+
 ## Configuration
 
 Environment variables:

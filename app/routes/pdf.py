@@ -3,8 +3,8 @@ from pathlib import Path
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
 from app.config import get_settings
-from app.models import UploadResponse
-from app.services.rag_service import index_pdf
+from app.models import DocumentInfo, UploadResponse
+from app.services.rag_service import get_indexed_documents, index_pdf
 
 
 router = APIRouter(tags=["pdf"])
@@ -43,3 +43,8 @@ async def upload_pdf(file: UploadFile = File(...)) -> UploadResponse:
         filename=safe_name,
         chunks_indexed=chunks_indexed,
     )
+
+
+@router.get("/documents", response_model=list[DocumentInfo])
+async def documents() -> list[DocumentInfo]:
+    return await get_indexed_documents()

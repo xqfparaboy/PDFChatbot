@@ -12,7 +12,7 @@ from qdrant_client.http.models import (
 )
 
 from app.config import get_settings
-from app.models import SourceChunk
+from app.models import DocumentInfo, SourceChunk
 from app.rag.chunking import TextChunk
 
 
@@ -89,15 +89,28 @@ def delete_chunks_for_source(source: str, client: QdrantClient | None = None) ->
 def search_chunks(
     query_vector: list[float],
     top_k: int,
+    source: str | None = None,
     client: QdrantClient | None = None,
 ) -> list[SourceChunk]:
     settings = get_settings()
     client = client or get_qdrant_client()
     ensure_collection(client)
 
+    query_filter = None
+    if source:
+        query_filter = Filter(
+            must=[
+                FieldCondition(
+                    key="source",
+                    match=MatchValue(value=source),
+                )
+            ]
+        )
+
     results = client.search(
         collection_name=settings.qdrant_collection,
         query_vector=query_vector,
+        query_filter=query_filter,
         limit=top_k,
         with_payload=True,
     )
@@ -110,4 +123,32 @@ def search_chunks(
             text=str(point.payload.get("text", "")),
         )
         for point in results
+    ]
+
+
+def list_documents(client: QdrantClient | None = None) -> list[DocumentInfo]:
+    settings = get_settings()
+    client = client or get_qdrant_client()
+    ensure_collection(client)
+
+    counts: dict[str, int] = {}
+    offset = None
+    while True:
+        points, offset = client.scroll(
+            collection_name=settings.qdrant_collection,
+            limit=100,
+            offset=offset,
+            with_payload=True,
+            with_vectors=False,
+        )
+        for point in points:
+            source = str(point.payload.get("source", ""))
+            if source:
+                counts[source] = counts.get(source, 0) + 1
+        if offset is None:
+            break
+
+    return [
+        DocumentInfo(filename=filename, chunks_indexed=count)
+        for filename, count in sorted(counts.items())
     ]
