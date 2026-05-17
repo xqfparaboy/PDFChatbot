@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.py[cod]
+.env
+qdrant_storage/
+uploaded_pdfs/*
+!uploaded_pdfs/.gitkeep
